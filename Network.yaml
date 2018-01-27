@@ -1,0 +1,65 @@
+heat_template_version: 2017-02-24
+description: Network
+
+parameters:
+    router_name: 
+        type: string
+        description: Name of the router
+    zoo_net_name:
+        type: string
+        description: Name of the private network
+    server_net_name:
+        type: string
+        description: Name of the private network
+    zoo_snet_name:
+        type: string
+        description: Name of the zookeeper subnetwork
+    server_snet_name:
+        type: string
+        description: Name of the server subnetwork
+
+resources: 
+    zoo_net: 
+        type: OS::Neutron::Net
+        properties: 
+            name: { get_param: zoo_net_name }
+    zoo_snet:
+        type: OS::Neutron::Subnet 
+        properties:
+            name: { get_param: zoo_snet_name }
+            network_id: { get_resource: zoo_net }
+            cidr: 10.1.1.0/24
+            allocation_pools:
+            - start: 10.1.1.2
+              end: 10.1.1.254
+            dns_nameservers: [ 8.8.8.8, 8.8.4.4 ]
+    server_net:
+        type: OS::Neutron::Net
+        properties: 
+            name: { get_param: server_net_name }
+    server_snet:
+        type: OS::Neutron::Subnet 
+        properties:
+            name: { get_param: server_snet_name }
+            network_id: { get_resource: server_net }
+            cidr: 10.1.2.0/24
+            allocation_pools:
+            - start: 10.1.2.2
+              end: 10.1.2.254
+            dns_nameservers: [ 8.8.8.8, 8.8.4.4 ]
+    router: 
+        type: OS::Neutron::Router 
+        properties:
+            name: { get_param: router_name }
+            external_gateway_info:
+                network: ExtNet
+    router_interface1:
+        type: OS::Neutron::RouterInterface 
+        properties:
+            router_id: { get_resource: router }
+            subnet_id: { get_resource: server_snet }
+    router_interface2:
+        type: OS::Neutron::RouterInterface 
+        properties:
+            router_id: { get_resource: router }
+            subnet_id: { get_resource: zoo_snet }

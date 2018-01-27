@@ -5,23 +5,43 @@ parameters:
   bank_id:
     type: string
     description: Instance name
-  private_net_name:
+  zoo_ip:
+    type: string
+    description: Instance name
+  server_net_name:
     type: string
     description: Name of the private network
-  private_snet_name:
+  zoo_net_name:
     type: string
-    description: Name of the private subnetwork
+    description: Name of the zookeeper subnetwork
+  server_snet_name:
+    type: string
+    description: Name of the server subnetwork
+  zoo_snet_name:
+    type: string
+    description: Name of the zookeeper subnetwork
   keypair_name:
     type: string
     description: Name of the keypair for the server
 
-resources: 
+resources:
+  keypair:
+    type: OS::Nova::KeyPair
+    properties:
+      name: { get_param: keypair_name }
+      save_private_key: true 
   public_port:
     type: OS::Neutron::Port
     properties:
-      network_id: { get_param: private_net_name }
+      network_id: { get_param: server_net_name }
       fixed_ips:
-      - subnet_id: { get_param: private_snet_name }
+      - subnet_id: { get_param: server_snet_name }
+  private_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: zoo_net_name }
+      fixed_ips:
+      - subnet_id: { get_param: zoo_snet_name }
   floating_ip: 
     type: OS::Neutron::FloatingIP 
     properties: 
@@ -37,9 +57,10 @@ resources:
             "%bank_id%": { get_param: bank_id } 
       image: xenial-server-cloudimg-amd64-vnx
       flavor: m1.smaller
-      key_name: { get_param: keypair_name }
+      key_name: { get_resource: keypair }
       networks:
         - port: { get_resource: public_port }
+        - port: { get_resource: private_port }
       user_data_format: RAW
       user_data:
         str_replace:
@@ -61,11 +82,19 @@ resources:
                   #!/bin/bash
                   mkdir -p /opt/bank
                   cd /opt/bank
-                  wget https://mega.nz/#!IFRCyJpT!vo0xkkkGWzBHUg8LT6FOQ6bTL2rX_MWVlPBNcO2hmKQ
+                  wget https://github.com/Thunkar/cnvr/raw/master/Bank.jar
             runcmd:
-              - [ java, -jar, /opt/bank/Bank.jar, zoo1, 80, -Djava.net.preferIPv4Stack=true ]
-
+              - [ bash, -x, /run/runBank.sh ]
+              - [ java, -jar, /opt/bank/Bank.jar, %zoo_ip%, 80, -Djava.net.preferIPv4Stack=true ]
+          params:
+            "%zoo_ip%" : { get_param: zoo_ip }
 outputs:
   vm_IP:
     description: Floating IP assigned to the VM 
     value: { get_attr: [floating_ip, floating_ip_address] }
+  public_key:
+    description: The public key of the keypair.
+    value: { get_attr: [keypair, public_key] }
+  private_key:
+    description: The private key of the keypair.
+    value: { get_attr: [keypair, private_key] }

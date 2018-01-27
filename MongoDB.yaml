@@ -1,0 +1,68 @@
+heat_template_version: 2017-02-24
+description: Ubuntu 16 + mongodb
+
+parameters:
+  zoo_net_name:
+    type: string
+    description: Name of the private network
+  zoo_snet_name:
+    type: string
+    description: Name of the private subnetwork
+  keypair_name:
+    type: string
+    description: Name of the keypair for the server
+
+resources: 
+  keypair:
+    type: OS::Nova::KeyPair
+    properties:
+      name: { get_param: keypair_name }
+      save_private_key: true
+  private_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: zoo_net_name }
+      fixed_ips:
+      - subnet_id: { get_param: zoo_snet_name }
+  vm1:
+    type: OS::Nova::Server
+    properties:
+      name: mongodb
+      image: xenial-server-cloudimg-amd64-vnx
+      flavor: m1.smaller
+      key_name: { get_resource: keypair }
+      networks:
+        - port: { get_resource: private_port }
+      user_data_format: RAW
+      user_data: |
+        #cloud-config
+        resolv_conf:
+          nameservers:
+            - 8.8.8.8
+            - 8.8.4.4
+        # Install packages
+        packages:
+          - default-jre
+        write_files:
+          - path: /run/installMongoDB.sh
+            permissions: 0755
+            content: |
+              #!/bin/bash
+              apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5
+              echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-3.6.list
+              apt-get update
+              apt-get install -y mongodb-org
+              #Create temporary file with new line in place
+              cat /etc/mongod.conf | sed -e "s/bindIp: localhost/bindIp: 0.0.0.0/" > /tmp/mongod.conf
+              #Copy the new file over the original file
+              mv /tmp/mongod.conf /etc/mongod.conf
+        runcmd:
+          - [ service, mongod, restart ]
+
+outputs:
+  public_key:
+    description: The public key of the keypair.
+    value: { get_attr: [keypair, public_key] }
+  private_key:
+    description: The private key of the keypair.
+    value: { get_attr: [keypair, private_key] }
