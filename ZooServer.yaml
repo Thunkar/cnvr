@@ -1,0 +1,91 @@
+heat_template_version: 2017-02-24
+description: Ubuntu 16 + zookeeper
+
+parameters:
+  zoo_id:
+    type: string
+    description: Instance name
+  private_net_name:
+    type: string
+    description: Name of the private network
+  private_snet_name:
+    type: string
+    description: Name of the private subnetwork
+  keypair_name:
+    type: string
+    description: Name of the keypair for the server
+
+resources: 
+  public_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_name }
+      fixed_ips:
+      - subnet_id: { get_param: private_snet_name }
+  floating_ip: 
+    type: OS::Neutron::FloatingIP 
+    properties: 
+      floating_network_id: ExtNet 
+      port_id: { get_resource: public_port }
+  vm1:
+    type: OS::Nova::Server
+    properties:
+      name: 
+        str_replace:
+          template: zoo%zoo_id%
+          params:
+            "%zoo_id%": { get_param: zoo_id } 
+      image: xenial-server-cloudimg-amd64-vnx
+      flavor: m1.smaller
+      key_name: { get_param: keypair_name }
+      networks:
+        - port: { get_resource: public_port }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #cloud-config
+            resolv_conf:
+              nameservers:
+                - 8.8.8.8
+                - 8.8.4.4
+            # Update apt database on first boot
+            apt_update: true
+            # Install packages
+            packages:
+              - default-jre
+            write_files:
+              - path: /run/installZooKeeper.sh
+                permissions: 0755
+                content: |
+                  #!/bin/bash
+                  adduser hadoop
+                  mkdir -p /data/zookeeper
+                  chown -R hadoop:hadoop /data
+                  cd /opt
+                  wget http://apache.is.co.za/zookeeper/zookeeper-3.4.10/zookeeper-3.4.10.tar.gz
+                  tar -xvf zookeeper-3.4.10.tar.gz
+                  chown hadoop:hadoop -R zookeeper-3.4.10
+                  su hadoop
+                  bash -c "cat > /opt/zookeeper-3.4.10/conf/zoo.cfg <<EOL
+                  tickTime=2000
+                  dataDir=/data/zookeeper
+                  clientPort=2181
+                  initLimit=10
+                  syncLimit=5
+                  server.1=zoo1:2888:3888
+                  server.2=zoo2:2888:3888
+                  server.3=zoo3:2888:3888
+                  EOL"
+                  bash -c "echo %zoo_id% >> /data/zookeeper/myid"
+            runcmd:
+              - [ bash, -x, /run/installZooKeeper.sh ]
+            runcmd:
+              - [ bash, -x, /opt/zookeeper-3.4.10/bin/zkServer.sh, start ]
+          params:
+            "%zoo_id%" : { get_param: zoo_id }
+
+outputs:
+  vm_IP:
+    description: Floating IP assigned to the VM 
+    value: { get_attr: [floating_ip, floating_ip_address] }

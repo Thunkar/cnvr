@@ -1,0 +1,71 @@
+heat_template_version: 2017-02-24
+description: Ubuntu 16 + bank
+
+parameters:
+  bank_id:
+    type: string
+    description: Instance name
+  private_net_name:
+    type: string
+    description: Name of the private network
+  private_snet_name:
+    type: string
+    description: Name of the private subnetwork
+  keypair_name:
+    type: string
+    description: Name of the keypair for the server
+
+resources: 
+  public_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_name }
+      fixed_ips:
+      - subnet_id: { get_param: private_snet_name }
+  floating_ip: 
+    type: OS::Neutron::FloatingIP 
+    properties: 
+      floating_network_id: ExtNet 
+      port_id: { get_resource: public_port }
+  vm1:
+    type: OS::Nova::Server
+    properties:
+      name: 
+        str_replace:
+          template: bank%bank_id%
+          params:
+            "%bank_id%": { get_param: bank_id } 
+      image: xenial-server-cloudimg-amd64-vnx
+      flavor: m1.smaller
+      key_name: { get_param: keypair_name }
+      networks:
+        - port: { get_resource: public_port }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #cloud-config
+            resolv_conf:
+              nameservers:
+                - 8.8.8.8
+                - 8.8.4.4
+            # Update apt database on first boot
+            apt_update: true
+            # Install packages
+            packages:
+              - default-jre
+            write_files:
+              - path: /run/runBank.sh
+                permissions: 0755
+                content: |
+                  #!/bin/bash
+                  mkdir -p /opt/bank
+                  cd /opt/bank
+                  wget https://mega.nz/#!IFRCyJpT!vo0xkkkGWzBHUg8LT6FOQ6bTL2rX_MWVlPBNcO2hmKQ
+            runcmd:
+              - [ java, -jar, /opt/bank/Bank.jar, zoo1, 80, -Djava.net.preferIPv4Stack=true ]
+
+outputs:
+  vm_IP:
+    description: Floating IP assigned to the VM 
+    value: { get_attr: [floating_ip, floating_ip_address] }
