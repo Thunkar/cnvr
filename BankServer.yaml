@@ -50,11 +50,6 @@ resources:
       network_id: { get_param: zoo_net_name }
       fixed_ips:
       - subnet_id: { get_param: zoo_snet_name }
-  floating_ip: 
-    type: OS::Neutron::FloatingIP 
-    properties: 
-      floating_network_id: ExtNet 
-      port_id: { get_resource: public_port }
   pool_member:
     type: OS::Neutron::LBaaS::PoolMember
     properties:
@@ -103,9 +98,6 @@ resources:
           params:
             "%zoo_ip%" : { get_param: zoo_ip }
 outputs:
-  vm_IP:
-    description: Floating IP assigned to the VM 
-    value: { get_attr: [floating_ip, floating_ip_address] }
   public_key:
     description: The public key of the keypair.
     value: { get_attr: [keypair, public_key] }
