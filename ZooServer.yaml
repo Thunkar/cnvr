@@ -76,6 +76,7 @@ resources:
                   server.1=10.1.1.101:2888:3888
                   server.2=10.1.1.102:2888:3888
                   EOL"
+                  rm /data/zookeeper/myid
                   bash -c "echo %zoo_id% >> /data/zookeeper/myid"
             runcmd:
               - [ bash, -x, /run/installZooKeeper.sh ]
