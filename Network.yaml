@@ -61,7 +61,7 @@ resources:
     pool:
         type: OS::Neutron::LBaaS::Pool
         properties:
-          name: { get_para: pool_name }
+          name: { get_param: pool_name }
           lb_algorithm: ROUND_ROBIN
           protocol: HTTP
           listener: { get_resource: listener }
