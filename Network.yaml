@@ -80,15 +80,22 @@ resources:
         properties:
             floating_network: ExtNet
             port_id: { get_attr: [loadbalancer, vip_port_id ]}
-    allow_all_rule:
+    allow_http_rule:
         type: OS::Neutron::FirewallRule
         properties:
-            name: AllowAll
+            name: Allowhttp
             action: allow
+            destination_port: 80
+            destination_ip_address: { get_attr: [loadbalancer, vip_address ]}
+    deny_all_rule:
+        type: OS::Neutron::FirewallRule
+        properties:
+            name: DenyAll
+            action: deny
     firewall_policy:
         type: OS::Neutron::FirewallPolicy
         properties:
-            firewall_rules: [ { get_resource: allow_all_rule } ]
+            firewall_rules: [ {get_resource:allow_http_rule},{ get_resource: deny_all_rule } ]
     firewall:
         type: OS::Neutron::Firewall
         properties:
