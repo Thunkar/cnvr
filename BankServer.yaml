@@ -57,11 +57,15 @@ resources:
       port_id: { get_resource: public_port }
   pool_member:
     type: OS::Neutron::LBaaS::PoolMember
-      properties:
-        pool: { get_param: pool_name }
-        address: { get_attr: [ vm1, first_address ]}
-        protocol_port: 8000
-        subnet: { get_param: server_snet_name }
+    properties:
+      pool: { get_param: pool_name }
+      address: 
+        str_replace:
+          template: 10.1.2.10%bank_id%
+          params:
+            "%bank_id%": { get_param: bank_id }
+      protocol_port: 8000
+      subnet: { get_param: server_snet_name }
   vm1:
     type: OS::Nova::Server
     properties:
