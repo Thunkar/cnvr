@@ -44,7 +44,7 @@ resources:
             network_id: { get_resource: server_net }
             cidr: 10.1.2.0/24
             allocation_pools:
-            - start: 10.1.2.2
+            - start: 10.1.2.5
               end: 10.1.2.254
             dns_nameservers: [ 8.8.8.8, 8.8.4.4 ]
     router: 

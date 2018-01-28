@@ -84,10 +84,9 @@ resources:
                   bash -c "echo %zoo_id% >> /data/zookeeper/myid"
             runcmd:
               - [ bash, -x, /run/installZooKeeper.sh ]
-              - [ bash, -x, /opt/zookeeper-3.4.10/bin/zkServer.sh, start ]
+#              - [ bash, -x, /opt/zookeeper-3.4.10/bin/zkServer.sh, start ]
           params:
             "%zoo_id%" : { get_param: zoo_id }
-
 outputs:
   public_key:
     description: The public key of the keypair.

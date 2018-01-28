@@ -40,9 +40,6 @@ resources:
           nameservers:
             - 8.8.8.8
             - 8.8.4.4
-        # Install packages
-        packages:
-          - default-jre
         write_files:
           - path: /run/installMongoDB.sh
             permissions: 0755
@@ -57,8 +54,8 @@ resources:
               #Copy the new file over the original file
               mv /tmp/mongod.conf /etc/mongod.conf
         runcmd:
-          - [ service, mongod, restart ]
-
+          - [ bash, -x, /run/installMongoDB.sh ]
+#          - [ service, mongod, restart ]
 outputs:
   public_key:
     description: The public key of the keypair.

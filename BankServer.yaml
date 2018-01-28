@@ -36,6 +36,11 @@ resources:
       network_id: { get_param: server_net_name }
       fixed_ips:
       - subnet_id: { get_param: server_snet_name }
+        ip_address: 
+          str_replace:
+            template: 10.1.2.10%bank_id%
+            params:
+              "%bank_id%": { get_param: bank_id }
   private_port:
     type: OS::Neutron::Port
     properties:
@@ -76,7 +81,7 @@ resources:
             packages:
               - default-jre
             write_files:
-              - path: /run/runBank.sh
+              - path: /run/installBank.sh
                 permissions: 0755
                 content: |
                   #!/bin/bash
@@ -84,8 +89,8 @@ resources:
                   cd /opt/bank
                   wget https://github.com/Thunkar/cnvr/raw/master/Bank.jar
             runcmd:
-              - [ bash, -x, /run/runBank.sh ]
-              - [ java, -jar, /opt/bank/Bank.jar, %zoo_ip%, 80, -Djava.net.preferIPv4Stack=true ]
+              - [ bash, -x, /run/installBank.sh ]
+#              - [ java, -jar, /opt/bank/Bank.jar, %zoo_ip%, 80, -Djava.net.preferIPv4Stack=true ]
           params:
             "%zoo_ip%" : { get_param: zoo_ip }
 outputs:
