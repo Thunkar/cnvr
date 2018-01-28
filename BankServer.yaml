@@ -60,7 +60,7 @@ resources:
           template: bank%bank_id%
           params:
             "%bank_id%": { get_param: bank_id } 
-      image: xenial-server-cloudimg-amd64-vnx
+      image: ubuntu16java
       flavor: m1.smaller
       key_name: { get_resource: keypair }
       networks:
@@ -75,11 +75,6 @@ resources:
               nameservers:
                 - 8.8.8.8
                 - 8.8.4.4
-            # Update apt database on first boot
-            apt_update: true
-            # Install packages
-            packages:
-              - default-jre
             write_files:
               - path: /run/installBank.sh
                 permissions: 0755
@@ -90,7 +85,7 @@ resources:
                   wget https://github.com/Thunkar/cnvr/raw/master/Bank.jar
             runcmd:
               - [ bash, -x, /run/installBank.sh ]
-#              - [ java, -jar, /opt/bank/Bank.jar, %zoo_ip%, 80, -Djava.net.preferIPv4Stack=true ]
+              - [ java, -jar, /opt/bank/Bank.jar, %zoo_ip%, 80, -Djava.net.preferIPv4Stack=true ]
           params:
             "%zoo_ip%" : { get_param: zoo_ip }
 outputs:

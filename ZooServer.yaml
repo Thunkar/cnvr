@@ -40,7 +40,7 @@ resources:
           template: zoo%zoo_id%
           params:
             "%zoo_id%": { get_param: zoo_id } 
-      image: xenial-server-cloudimg-amd64-vnx
+      image: ubuntu16java
       flavor: m1.smaller
       key_name: { get_resource: keypair }
       networks:
@@ -54,11 +54,6 @@ resources:
               nameservers:
                 - 8.8.8.8
                 - 8.8.4.4
-            # Update apt database on first boot
-            apt_update: true
-            # Install packages
-            packages:
-              - default-jre
             write_files:
               - path: /run/installZooKeeper.sh
                 permissions: 0755
@@ -84,7 +79,7 @@ resources:
                   bash -c "echo %zoo_id% >> /data/zookeeper/myid"
             runcmd:
               - [ bash, -x, /run/installZooKeeper.sh ]
-#              - [ bash, -x, /opt/zookeeper-3.4.10/bin/zkServer.sh, start ]
+              - [ bash, -x, /opt/zookeeper-3.4.10/bin/zkServer.sh, start ]
           params:
             "%zoo_id%" : { get_param: zoo_id }
 outputs:

@@ -28,7 +28,7 @@ resources:
     type: OS::Nova::Server
     properties:
       name: mongodb
-      image: xenial-server-cloudimg-amd64-vnx
+      image: ubuntu16java
       flavor: m1.smaller
       key_name: { get_resource: keypair }
       networks:
@@ -55,7 +55,7 @@ resources:
               mv /tmp/mongod.conf /etc/mongod.conf
         runcmd:
           - [ bash, -x, /run/installMongoDB.sh ]
-#          - [ service, mongod, restart ]
+          - [ service, mongod, restart ]
 outputs:
   public_key:
     description: The public key of the keypair.
