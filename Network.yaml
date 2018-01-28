@@ -17,6 +17,9 @@ parameters:
     server_snet_name:
         type: string
         description: Name of the server subnetwork
+    pool_name:
+        type: string
+        description: Load balancer pool name
 
 resources: 
     zoo_net: 
@@ -58,6 +61,7 @@ resources:
     pool:
         type: OS::Neutron::LBaaS::Pool
         properties:
+          name: { get_para: pool_name }
           lb_algorithm: ROUND_ROBIN
           protocol: HTTP
           listener: { get_resource: listener }
@@ -76,6 +80,19 @@ resources:
         properties:
             floating_network: ExtNet
             port_id: { get_attr: [loadbalancer, vip_port_id ]}
+    allow_all_rule:
+        type: OS::Neutron::FirewallRule
+        properties:
+            name: AllowAll
+            action: allow
+    firewall_policy:
+        type: OS::Neutron::FirewallPolicy
+        properties:
+            firewall_rules: [ { get_resource: allow_all_rule } ]
+    firewall:
+        type: OS::Neutron::Firewall
+        properties:
+            firewall_policy_id: { get_resource: firewall_policy }
     router: 
         type: OS::Neutron::Router 
         properties:
