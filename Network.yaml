@@ -90,12 +90,14 @@ resources:
         properties:
             name: AllowOutbound
             action: allow
+            protocol: any
             source_ip_address: 10.1.0.0/16
     allow_lb_rule:
         type: OS::Neutron::FirewallRule
         properties:
             name: AllowLB
             action: allow
+            protocol: tcp
             destination_ip_address: { get_attr: [loadbalancer, vip_address ]}
             destination_port: 80
     allow_admin_rule:
@@ -103,6 +105,7 @@ resources:
         properties:
             name: AllowAdmin
             action: allow
+            protocol: tcp
             destination_ip_address: 10.1.2.42
             destination_port: 22
     firewall_policy:
