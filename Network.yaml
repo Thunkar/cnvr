@@ -111,7 +111,7 @@ resources:
     firewall_policy:
         type: OS::Neutron::FirewallPolicy
         properties:
-            firewall_rules: [{ get_resource: allow_outbound_rule },{ get_resource: allow_lb_rule },{ get_resource: allow_admin_rule }, { get_resource: allow_lb_rule }, { get_resource: deny_all_rule } ]
+            firewall_rules: [{ get_resource: allow_outbound_rule },{ get_resource: allow_lb_rule },{ get_resource: allow_admin_rule },  { get_resource: deny_all_rule } ]
     firewall:
         type: OS::Neutron::Firewall
         properties:
